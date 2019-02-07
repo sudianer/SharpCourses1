@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
+using System.IO;
 
 namespace C2courses1
 {
@@ -13,6 +14,8 @@ namespace C2courses1
     /// </summary>
     class Game
     {
+        delegate void Log(string msg);
+        static Log log;
         static Random rng;
         private static Ship _ship;
         private static int _score;
@@ -49,6 +52,9 @@ namespace C2courses1
             _ship = new Ship(new Point(10, 400), new Point(5,5), new Size(10,10));
             rng = new Random();
             _score = 0;
+
+            log = Console.WriteLine;
+            log += FileMessage;
         }
         const int MAX_HEIGHT = 1000;
         const int MAX_WIDTH = 1000;
@@ -58,8 +64,8 @@ namespace C2courses1
         /// <param name="form"></param>
         public static void Init(Form form)
         {
-           
 
+            log.Invoke("Инициализация игры");
             Graphics g;
 
             _context = BufferedGraphicsManager.Current;
@@ -132,6 +138,7 @@ namespace C2courses1
                     System.Media.SystemSounds.Exclamation.Play();
                     _energyPacks[i] = null;
                     _ship.EnergyPlus(20);
+                    log.Invoke("Восстановление 20 энергии");
                     continue;
                 }
             }
@@ -147,15 +154,24 @@ namespace C2courses1
                     _bullet = null;
                     int r = rng.Next(5,50);
                     _score++;
+                    log.Invoke("Астероид уничтожен!");
                    // _asteroids[i] = null;
                     _asteroids[i] = new Asteroid(new Point(1000, rng.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
                     continue;
                 }
                 if (!_ship.Collision(_asteroids[i])) continue;
 
-                _ship?.EnergyMinus(rng.Next(1, 10));
+                int rg = rng.Next(1, 10);
+                _ship?.EnergyMinus(rg);
                 System.Media.SystemSounds.Asterisk.Play();
-                if (_ship.Energy <= 0) _ship?.Die();
+
+                log.Invoke("Корабль получил урон: " + rg);
+                if (_ship.Energy <= 0)
+                {
+                    log.Invoke("Корабль уничтожен");
+                    _ship?.Die();
+                    
+                }
             }
             //_bullet.Update();
         }
@@ -167,7 +183,7 @@ namespace C2courses1
         /// </summary>
         public static void Load()
         {
-          
+            
             _objs = new BaseObject[30];
             //_bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
             _asteroids = new Asteroid[20];
@@ -202,16 +218,32 @@ namespace C2courses1
                 _ship.Down();
         }
         /// <summary>
-        /// Конец игры
+        /// Конец игры, завершает работу game
         /// </summary>
         public static void Finish()
         {
             _timer.Stop();
             Buffer.Graphics.DrawString("You Died", new Font(FontFamily.GenericSansSerif, 60, FontStyle.Underline), Brushes.White, 200, 100);
+            log.Invoke("Конец игры!");
             Buffer.Render();
         }
        
-        
+        /// <summary>
+        /// вывод сообщения в файл лога
+        /// </summary>
+        /// <param name="msg">текст сообщения</param>
+        private static void FileMessage(string msg)
+        {
+            if (!File.Exists("log.txt"))
+            {
+                File.Create("log.txt");
+            }
+            
+            using(StreamWriter sw = new StreamWriter("log.txt"))
+            {
+                sw.WriteLine(msg);
+            }
+        }
     
     }
 }

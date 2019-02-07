@@ -10,6 +10,7 @@ namespace C2courses1
     class Program
     {
 
+
       
         /// <summary>
         /// Точка входа программы

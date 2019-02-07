@@ -11,9 +11,7 @@ namespace C2courses1
     /// Определяет астероид, его отрисовку и перемещение
     /// </summary>
     class Asteroid : BaseObject , ICloneable, IComparable<Asteroid>
-
     {
-
         Image smallRock;
         public int Power { get; set; } = 3;
         /// <summary>
@@ -45,13 +43,14 @@ namespace C2courses1
             Asteroid asteroid = new Asteroid(new Point(Pos.X, Pos.Y), new Point(Dir.X,Dir.Y), new Size(Size.Width,Size.Height));
             return asteroid;
         } /// <summary>
-          /// Обновляет позицию объекта на экране 
+          /// Обновляет позицию объекта на экране
           /// </summary>
         public override void Update()
         {
             Pos.X = Pos.X + Dir.X;
             if (Pos.X < 0) Dir.X = Game.Width + Size.Width;
         }
+
         /// <summary>
         /// Сравнение двух объектов типа Asteroid
         /// 1 - сила текущего объекта больше

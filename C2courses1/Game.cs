@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
+
 using System.IO;
+
 
 namespace C2courses1
 {
@@ -14,17 +16,22 @@ namespace C2courses1
     /// </summary>
     class Game
     {
-        delegate void Log(string msg);
+       delegate void Log(string msg);
         static Log log;
         static Random rng;
         private static Ship _ship;
         private static int _score;
+
+        static Random rng;
+
         private static BufferedGraphicsContext _context;
         /// <summary>
         /// Буфер графики
         /// </summary>
         public static BufferedGraphics Buffer;
+
         public static EnergyPack[] _energyPacks;
+
         /// <summary>
         /// Хранит в себе разные объекты игры
         /// </summary>
@@ -37,7 +44,9 @@ namespace C2courses1
         /// астероиды этой игры
         /// </summary>
         private static Asteroid[] _asteroids;
+
         static Timer _timer;
+
         /// <summary>
         /// Ширина окна игры, не может быть больше 1000 либо отрицательной
         /// </summary>
@@ -48,6 +57,7 @@ namespace C2courses1
         public static int Height { get; set; }
         static Game()
         {
+
             _timer = new Timer { Interval = 100 };
             _ship = new Ship(new Point(10, 400), new Point(5,5), new Size(10,10));
             rng = new Random();
@@ -55,6 +65,9 @@ namespace C2courses1
 
             log = Console.WriteLine;
             log += FileMessage;
+
+            rng = new Random();
+
         }
         const int MAX_HEIGHT = 1000;
         const int MAX_WIDTH = 1000;
@@ -66,6 +79,7 @@ namespace C2courses1
         {
 
             log.Invoke("Инициализация игры");
+
             Graphics g;
 
             _context = BufferedGraphicsManager.Current;
@@ -83,12 +97,15 @@ namespace C2courses1
             Buffer = _context.Allocate(g, new Rectangle(0, 0, Width, Height));
             Load();
 
+
             form.KeyDown += Form_KeyDown;
             Ship.MessageDie += Finish;
 
           
             _timer.Start();
             _timer.Tick += Timer_Tick;
+
+
 
         }
         /// <summary>
@@ -118,6 +135,7 @@ namespace C2courses1
             if (_ship != null)
                 Buffer.Graphics.DrawString("Energy:"+_ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0,0);
             Buffer.Graphics.DrawString("Score:" + _score, SystemFonts.DefaultFont, Brushes.White, 0, 20);
+
             Buffer.Render();
         }
         /// <summary>
@@ -127,6 +145,7 @@ namespace C2courses1
         {
             foreach (BaseObject obj in _objs)
                 obj.Update();
+
             for (int i = 0; i<_energyPacks.Length;i++)
             {
               
@@ -174,6 +193,7 @@ namespace C2courses1
                 }
             }
             //_bullet.Update();
+
         }
        
         
@@ -183,7 +203,7 @@ namespace C2courses1
         /// </summary>
         public static void Load()
         {
-            
+
             _objs = new BaseObject[30];
             //_bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
             _asteroids = new Asteroid[20];
@@ -199,6 +219,7 @@ namespace C2courses1
                 int r = rng.Next(5,50);
                 _asteroids[i] = new Asteroid(new Point(1000, rng.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r,r));
             }
+
             for(var i = 0; i<_energyPacks.Length; i++)
             {
                 _energyPacks[i] = new EnergyPack(new Point(rng.Next(1000, 1600), rng.Next(0, Game.Height)), new Point(8, 0), new Size(15, 15));
@@ -244,6 +265,5 @@ namespace C2courses1
                 sw.WriteLine(msg);
             }
         }
-    
     }
 }

@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 namespace C2courses1
 {
+    public delegate void Message();
     /// <summary>
     /// Базовый класс объекта в игре, от него наследуются остальные классы
     /// </summary>

@@ -10,12 +10,10 @@ namespace C2courses1
     /// <summary>
     /// Определяет астероид, его отрисовку и перемещение
     /// </summary>
-    class Asteroid : BaseObject , ICloneable
-
+    class Asteroid : BaseObject , ICloneable, IComparable<Asteroid>
     {
-
         Image smallRock;
-        public int Power { get; set; }
+        public int Power { get; set; } = 3;
         /// <summary>
         /// Инициализирует новый экземпляр класса Asteroid с его начальной позицией, 
         /// последующим перемещением, и размером
@@ -36,6 +34,10 @@ namespace C2courses1
             Game.Buffer.Graphics.FillEllipse(Brushes.White, Pos.X, Pos.Y, Size.Width, Size.Height);
             //Game.Buffer.Graphics.DrawImage(smallRock, Pos.X, Pos.Y);
         }
+        /// <summary>
+        /// Возвращает клон объекта
+        /// </summary>
+        /// <returns></returns>
         public object Clone()
         {
             Asteroid asteroid = new Asteroid(new Point(Pos.X, Pos.Y), new Point(Dir.X,Dir.Y), new Size(Size.Width,Size.Height));
@@ -47,6 +49,25 @@ namespace C2courses1
         {
             Pos.X = Pos.X + Dir.X;
             if (Pos.X < 0) Dir.X = Game.Width + Size.Width;
+        }
+
+        /// <summary>
+        /// Сравнение двух объектов типа Asteroid
+        /// 1 - сила текущего объекта больше
+        /// -1 - сила текущего объекта меньше
+        /// 0 сила равна
+        /// </summary>
+        /// <param name="obj">объект сравнения</param>
+        /// <returns></returns>
+        int IComparable<Asteroid>.CompareTo(Asteroid obj)
+        {            
+                if (Power > obj.Power)
+                    return 1;
+                if (Power < obj.Power)
+                    return -1;
+                else
+                    return 0;               
+            throw new ArgumentException("Parameter is not an Asteroid!");
         }
     }
 }

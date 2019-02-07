@@ -9,20 +9,29 @@ namespace C2courses1
 {
     class Program
     {
+
+
+      
+        /// <summary>
+        /// Точка входа программы
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
-            Form form = new Form()
-            {
-                Width = 800,
-                Height = 600
-            
-            };
            
-            Game.Init(form);
-            form.Show();
-            Game.Load();
-            Game.Draw();
-            Application.Run(form);
+                Form form = new Form()
+                {
+                    Width = 800,
+                    Height = 600
+
+                };
+
+                Game.Init(form);
+                form.Show();
+                Game.Load();
+                Game.Draw();
+                Application.Run(form);
+           
         }
     }
 }

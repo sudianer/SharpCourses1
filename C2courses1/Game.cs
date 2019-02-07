@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
 
+using System.IO;
+
+
 namespace C2courses1
 {
     /// <summary>
@@ -13,14 +16,21 @@ namespace C2courses1
     /// </summary>
     class Game
     {
+       delegate void Log(string msg);
+        static Log log;
         static Random rng;
+        private static Ship _ship;
+        private static int _score;
 
+        static Random rng;
 
         private static BufferedGraphicsContext _context;
         /// <summary>
         /// Буфер графики
         /// </summary>
         public static BufferedGraphics Buffer;
+
+        public static EnergyPack[] _energyPacks;
 
         /// <summary>
         /// Хранит в себе разные объекты игры
@@ -34,7 +44,9 @@ namespace C2courses1
         /// астероиды этой игры
         /// </summary>
         private static Asteroid[] _asteroids;
-        
+
+        static Timer _timer;
+
         /// <summary>
         /// Ширина окна игры, не может быть больше 1000 либо отрицательной
         /// </summary>
@@ -45,7 +57,17 @@ namespace C2courses1
         public static int Height { get; set; }
         static Game()
         {
+
+            _timer = new Timer { Interval = 100 };
+            _ship = new Ship(new Point(10, 400), new Point(5,5), new Size(10,10));
             rng = new Random();
+            _score = 0;
+
+            log = Console.WriteLine;
+            log += FileMessage;
+
+            rng = new Random();
+
         }
         const int MAX_HEIGHT = 1000;
         const int MAX_WIDTH = 1000;
@@ -55,7 +77,8 @@ namespace C2courses1
         /// <param name="form"></param>
         public static void Init(Form form)
         {
-           
+
+            log.Invoke("Инициализация игры");
 
             Graphics g;
 
@@ -74,9 +97,15 @@ namespace C2courses1
             Buffer = _context.Allocate(g, new Rectangle(0, 0, Width, Height));
             Load();
 
-            Timer timer = new Timer { Interval = 100 };
-            timer.Start();
-            timer.Tick += Timer_Tick;
+
+            form.KeyDown += Form_KeyDown;
+            Ship.MessageDie += Finish;
+
+          
+            _timer.Start();
+            _timer.Tick += Timer_Tick;
+
+
 
         }
         /// <summary>
@@ -98,8 +127,15 @@ namespace C2courses1
             foreach (BaseObject obj in _objs)
                 obj.Draw();
             foreach (Asteroid obj in _asteroids)
-                obj.Draw();
-            _bullet.Draw();
+                obj?.Draw();
+            foreach (EnergyPack ep in _energyPacks)
+                ep?.Draw();
+            _bullet?.Draw();
+            _ship?.Draw();
+            if (_ship != null)
+                Buffer.Graphics.DrawString("Energy:"+_ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0,0);
+            Buffer.Graphics.DrawString("Score:" + _score, SystemFonts.DefaultFont, Brushes.White, 0, 20);
+
             Buffer.Render();
         }
         /// <summary>
@@ -109,19 +145,55 @@ namespace C2courses1
         {
             foreach (BaseObject obj in _objs)
                 obj.Update();
-            for(int i = 0; i < _asteroids.Length;i++)
+
+            for (int i = 0; i<_energyPacks.Length;i++)
             {
-                _asteroids[i].Update();
-                if (_asteroids[i].Collision(_bullet))
+              
+                if (_energyPacks[i] == null)
+                    continue;
+                _energyPacks[i].Update();
+                if (_energyPacks[i].Collision(_ship))
                 {
-                    System.Media.SystemSounds.Hand.Play();
-                    _bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
-                    int r = rng.Next(5,50);
-                    
-                    _asteroids[i] = new Asteroid(new Point(1000, rng.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+                    System.Media.SystemSounds.Exclamation.Play();
+                    _energyPacks[i] = null;
+                    _ship.EnergyPlus(20);
+                    log.Invoke("Восстановление 20 энергии");
+                    continue;
                 }
             }
-            _bullet.Update();
+            _bullet?.Update();
+            for(int i = 0; i < _asteroids.Length;i++)
+            {
+                if (_asteroids[i] == null) continue;
+                _asteroids[i].Update();
+                if (_bullet != null && _asteroids[i].Collision(_bullet))
+                {
+                    System.Media.SystemSounds.Hand.Play();
+                    //_bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
+                    _bullet = null;
+                    int r = rng.Next(5,50);
+                    _score++;
+                    log.Invoke("Астероид уничтожен!");
+                   // _asteroids[i] = null;
+                    _asteroids[i] = new Asteroid(new Point(1000, rng.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+                    continue;
+                }
+                if (!_ship.Collision(_asteroids[i])) continue;
+
+                int rg = rng.Next(1, 10);
+                _ship?.EnergyMinus(rg);
+                System.Media.SystemSounds.Asterisk.Play();
+
+                log.Invoke("Корабль получил урон: " + rg);
+                if (_ship.Energy <= 0)
+                {
+                    log.Invoke("Корабль уничтожен");
+                    _ship?.Die();
+                    
+                }
+            }
+            //_bullet.Update();
+
         }
        
         
@@ -131,10 +203,11 @@ namespace C2courses1
         /// </summary>
         public static void Load()
         {
-          
+
             _objs = new BaseObject[30];
-            _bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
-            _asteroids = new Asteroid[20];          
+            //_bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
+            _asteroids = new Asteroid[20];
+            _energyPacks = new EnergyPack[5];
             for (var i = 0; i < _objs.Length; i++)
             {   
                 int r = rng.Next(5, 50);
@@ -147,7 +220,50 @@ namespace C2courses1
                 _asteroids[i] = new Asteroid(new Point(1000, rng.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r,r));
             }
 
+            for(var i = 0; i<_energyPacks.Length; i++)
+            {
+                _energyPacks[i] = new EnergyPack(new Point(rng.Next(1000, 1600), rng.Next(0, Game.Height)), new Point(8, 0), new Size(15, 15));
+            }
+
         }
-    
+        /// <summary>
+        /// Обработчик нажатия кнопки
+        /// </summary>
+        private static void Form_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.ControlKey)
+                _bullet = new Bullet(new Point(_ship.Rect.X + 10, _ship.Rect.Y + 4), new Point(4, 0), new Size(4, 1));
+            if (e.KeyCode == Keys.Up)
+                _ship.Up();
+            if (e.KeyCode == Keys.Down)
+                _ship.Down();
+        }
+        /// <summary>
+        /// Конец игры, завершает работу game
+        /// </summary>
+        public static void Finish()
+        {
+            _timer.Stop();
+            Buffer.Graphics.DrawString("You Died", new Font(FontFamily.GenericSansSerif, 60, FontStyle.Underline), Brushes.White, 200, 100);
+            log.Invoke("Конец игры!");
+            Buffer.Render();
+        }
+       
+        /// <summary>
+        /// вывод сообщения в файл лога
+        /// </summary>
+        /// <param name="msg">текст сообщения</param>
+        private static void FileMessage(string msg)
+        {
+            if (!File.Exists("log.txt"))
+            {
+                File.Create("log.txt");
+            }
+            
+            using(StreamWriter sw = new StreamWriter("log.txt"))
+            {
+                sw.WriteLine(msg);
+            }
+        }
     }
 }
